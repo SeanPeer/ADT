@@ -14,7 +14,7 @@ typedef struct AdptArray_
     PRINT_FUNC printFunc;
     int size;
     int max;
-};
+} AdptArray;
 
 // Initialize an empty array
 PAdptArray CreateAdptArray(COPY_FUNC copyFunc, DEL_FUNC deleteFunc, PRINT_FUNC printFunc)
@@ -22,9 +22,13 @@ PAdptArray CreateAdptArray(COPY_FUNC copyFunc, DEL_FUNC deleteFunc, PRINT_FUNC p
     PAdptArray new_arr = (PAdptArray)malloc(sizeof(struct AdptArray_)); // creating space in memory for new object
 
     new_arr->arr = (PElement *)malloc(2 * sizeof(PElement)); // creating space in memory for 2 elements inside the array
-    new_arr->size = 0;                                       // initialize current size as 0
-    new_arr->max = 2;                                        // current max size is set to 2
+    new_arr->size = 2;                                       // initialize current size as 0
+    // new_arr->max = 2;                                        // current max size is set to 2
 
+   for (int i = obj_arr->size; i < new_size; i++)
+    {
+        new_arr[i] = NULL;
+    }
     new_arr->copyFunc = copyFunc;
     new_arr->deleteFunc = deleteFunc;
     new_arr->printFunc = printFunc;
@@ -36,7 +40,7 @@ PAdptArray CreateAdptArray(COPY_FUNC copyFunc, DEL_FUNC deleteFunc, PRINT_FUNC p
 void DeleteAdptArray(PAdptArray obj_arr)
 {
     // delete each element in the array
-    for (int i = 0; i < obj_arr->size; i++)
+    for (int i = 0; i < obj_arr->max; i++)
     {
         obj_arr->deleteFunc(obj_arr->arr[i]);
     }
@@ -47,30 +51,36 @@ void DeleteAdptArray(PAdptArray obj_arr)
 
 Result SetAdptArrayAt(PAdptArray obj_arr, int index, PElement element)
 {
-    // There is no object to insert to
-    if (obj_arr == NULL)
+    if (index < obj_arr->size && index >= 0) // check if the index is within the current size of the array
     {
-        return FAIL;
+        obj_arr->deleteFunc(obj_arr->arr[index]);         // delete the element at the given index
+        obj_arr->arr[index] = obj_arr->copyFunc(element); // set the element to the given element
     }
-
-    // If the index is out of memory bound in currernt array
-    if (index >= obj_arr->max)
+    else if (index >= obj_arr->size) // if the index is greater than the current size of the array, resize the array
     {
-        int new_max = obj_arr->max * 2;                                                    // setting new max size twice as big
-        PElement *new_arr = (PElement *)realloc(obj_arr->arr, new_max * sizeof(PElement)); // realocating the old arr with new size to other place in memory with the new space
-
-        obj_arr->arr = new_arr; // updating the array with the new space
-        obj_arr->max = new_max; // updating the max capacity in obj
+        int new_size = index + 1;
+        PElement *new_arr = (PElement *)malloc(new_size * sizeof(PElement));
+        if (!new_arr)
+        {
+            printf("Error: Out of memory.\n");
+            return FAIL;
+        }
+        // Copy the existing elements to the new array
+        for (int i = 0; i < obj_arr->size; i++)
+        {
+            new_arr[i] = obj_arr->arr[i];
+        }
+        // Initialize the new elements to NULL
+        for (int i = obj_arr->size; i < new_size; i++)
+        {
+            new_arr[i] = NULL;
+        }
+        // Delete the old array and update the object's fields
+        free(obj_arr->arr);
+        obj_arr->arr = new_arr;
+        obj_arr->size = new_size;
+        obj_arr->arr[index] = obj_arr->copyFunc(element);
     }
-
-    // updating the size of the array in case the index is bigger then current size
-    if (index >= obj_arr->size)
-    {
-        obj_arr->size = index + 1;
-    }
-
-    obj_arr->arr[index] = obj_arr->copyFunc(element); // saving a copy of the element as asked
-    free(element);                                    // freeing the space used for the element
     return SUCCESS;
 }
 
@@ -92,12 +102,11 @@ PElement GetAdptArrayAt(PAdptArray obj_arr, int index)
     {
         return NULL;
     }
-    else 
+    else
     {
         PElement copy_element = obj_arr->copyFunc(obj_arr->arr[index]);
         return copy_element;
     }
-    
 }
 
 int GetAdptArraySize(PAdptArray obj_arr)
@@ -113,18 +122,24 @@ int GetAdptArraySize(PAdptArray obj_arr)
 
 void PrintDB(PAdptArray obj_arr)
 {
-    if (obj_arr == NULL)
+    if (obj_arr == NULL || obj_arr->size == 0)
     {
         printf("Error - Cannot get an element out of a NULL array! \n");
+        return;
     }
     else
     {
 
         for (int i = 0; i < obj_arr->size; i++)
         {
-            if (obj_arr->arr[i] == NULL)
+
+            if (obj_arr->arr[i])
+            {
+
+                obj_arr->printFunc(obj_arr->arr[i]);
+            }
+            else
                 continue;
-            else obj_arr->printFunc(obj_arr->arr[i]);;
         }
     }
 }
