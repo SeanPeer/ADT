@@ -25,9 +25,9 @@ PAdptArray CreateAdptArray(COPY_FUNC copyFunc, DEL_FUNC deleteFunc, PRINT_FUNC p
     new_arr->size = 2;                                       // initialize current size as 0
     // new_arr->max = 2;                                        // current max size is set to 2
 
-   for (int i = obj_arr->size; i < new_size; i++)
+   for (int i = 0; i < new_arr->size; i++)
     {
-        new_arr[i] = NULL;
+        new_arr->arr[i] = NULL;
     }
     new_arr->copyFunc = copyFunc;
     new_arr->deleteFunc = deleteFunc;
@@ -39,10 +39,11 @@ PAdptArray CreateAdptArray(COPY_FUNC copyFunc, DEL_FUNC deleteFunc, PRINT_FUNC p
 // Deleting each element in the array inside the object
 void DeleteAdptArray(PAdptArray obj_arr)
 {
+    int tmp = obj_arr->size;  
     // delete each element in the array
-    for (int i = 0; i < obj_arr->max; i++)
+    for (int i = 0; i < tmp; i++)
     {
-        obj_arr->deleteFunc(obj_arr->arr[i]);
+        free(obj_arr->arr[i]);
     }
 
     free(obj_arr->arr); // Free the space in memory that used to store the array
